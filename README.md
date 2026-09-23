@@ -1,5 +1,7 @@
 # Forense Digital — Notas de Estudo
 
+🌐 [Read in English](README.en.md)
+
 Repositório de estudo da disciplina de perícia forense digital: guias de ferramenta, metodologia e comandos organizados enquanto eu aprendo. Nada aqui é específico de um caso — **sem imagem de disco, sem laudo preenchido, sem dado de prova**.
 
 ## Por que não tem imagem nem laudo aqui

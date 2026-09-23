@@ -1,3 +1,5 @@
+🌐 [Read in English](en/iped.md)
+
 # IPED — guia de uso
 
 [IPED](https://github.com/sepinf-inc/IPED) (Indexador e Processador de Evidências Digitais) 4.3.1, instalado a partir do release oficial do GitHub. Fluxo em dois programas: `iped.exe` processa a imagem e gera uma pasta de caso; `IPED-SearchApp.exe`, gerado dentro dessa pasta, é onde a análise acontece.

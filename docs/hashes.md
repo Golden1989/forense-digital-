@@ -1,3 +1,5 @@
+🌐 [Read in English](en/hashes.md)
+
 # Hash de uma imagem forense
 
 ## Duas coisas diferentes que se chamam "hash da imagem"

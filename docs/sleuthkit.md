@@ -1,3 +1,5 @@
+🌐 [Read in English](en/sleuthkit.md)
+
 # Sleuth Kit — referência de comandos
 
 Comandos do [The Sleuth Kit](https://www.sleuthkit.org/) (TSK 4.12.1), testados em WSL (Ubuntu). Organizados pela camada da imagem que cada um lê — do container bruto até um único arquivo apagado — mais as receitas de várias etapas que resolvem tarefas de verdade.

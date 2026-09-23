@@ -1,3 +1,5 @@
+🌐 [Read in English](en/methodology.md)
+
 # Por onde começar numa imagem
 
 Quando entregam uma imagem "no escuro", sem contexto, é porque na perícia real ninguém entrega o caso mastigado. Você recebe um disco e uma pergunta vaga — e é você quem transforma isso em hipóteses, exames, achados e respostas.
