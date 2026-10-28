@@ -18,6 +18,19 @@ If an example below uses a case name, a company or a question number, it's **fic
 | [`docs/en/hashes.md`](docs/en/hashes.md) | How to hash a forensic image (PowerShell and WSL), MD5/SHA-1/SHA-256/SHA-512, and why the `.E01` file's hash differs from the acquired content's hash |
 | [`docs/en/sleuthkit.md`](docs/en/sleuthkit.md) | Sleuth Kit (TSK) command reference, organized by the 6 layers of an image, with ready-to-run terminal recipes (Linux/WSL) |
 | [`docs/en/iped.md`](docs/en/iped.md) | IPED guide: processing, analysis, bookmarks, export, configuration, disk anatomy |
+| [`docs/en/windows-registry.md`](docs/en/windows-registry.md) | Windows Registry: hives, UserAssist, Prefetch, RunMRU, RecentDocs, USBSTOR/MountedDevices, Event Log, Windows Search, with a review quiz |
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Summarizes the `packages.xml` from an Android extraction: total packages, how many are user vs. system, the 10 most recent and the 10 with the most granted permissions, with CSV export. Only reads the file — never writes anything into the evidence folder. |
+
+```bash
+python ferramentas/analisa_packages.py path/packages.xml
+python ferramentas/analisa_packages.py path/packages.xml --so-usuario
+python ferramentas/analisa_packages.py path/packages.xml --csv output.csv
+```
 
 ## Tools used
 

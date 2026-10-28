@@ -18,6 +18,19 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 | [`docs/hashes.md`](docs/hashes.md) | Como calcular o hash de uma imagem forense (PowerShell e WSL), MD5/SHA-1/SHA-256/SHA-512, e por que o hash do arquivo `.E01` é diferente do hash do conteúdo adquirido |
 | [`docs/sleuthkit.md`](docs/sleuthkit.md) | Referência de comandos do Sleuth Kit (TSK), organizada pelas 6 camadas de uma imagem, com receitas prontas de terminal (Linux/WSL) |
 | [`docs/iped.md`](docs/iped.md) | Guia do IPED: processar, analisar, marcadores, exportação, configuração, anatomia de disco |
+| [`docs/registro-windows.md`](docs/registro-windows.md) | Registro do Windows: hives, UserAssist, Prefetch, RunMRU, RecentDocs, USBSTOR/MountedDevices, Event Log, Windows Search, com quiz de revisão |
+
+## Scripts
+
+| Script | O que faz |
+|---|---|
+| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Resume o `packages.xml` de uma extração Android: total de pacotes, quantos são de usuário vs. de sistema, os 10 mais recentes e os 10 com mais permissões concedidas, com exportação pra CSV. Só lê o arquivo — nunca grava nada na pasta da evidência. |
+
+```bash
+python ferramentas/analisa_packages.py caminho/packages.xml
+python ferramentas/analisa_packages.py caminho/packages.xml --so-usuario
+python ferramentas/analisa_packages.py caminho/packages.xml --csv saida.csv
+```
 
 ## Ferramentas usadas
 
