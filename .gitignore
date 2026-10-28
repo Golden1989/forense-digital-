@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# saida de analise dos scripts (pode conter dado real de um caso testado)
+*.csv
+*.xlsx

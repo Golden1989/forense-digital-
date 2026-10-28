@@ -25,11 +25,15 @@ If an example below uses a case name, a company or a question number, it's **fic
 | Script | What it does |
 |---|---|
 | [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Summarizes the `packages.xml` from an Android extraction: total packages, how many are user vs. system, user apps numbered in chronological install order (first and last flagged — only among user apps, since firmware apps mostly share the same date) and the 10 user apps with the most granted permissions. Exports a CSV (opens straight in Excel), already in chronological order but re-sortable by any column. Only reads the file — never writes anything into the evidence folder. |
+| [`ferramentas/linha_do_tempo.py`](ferramentas/linha_do_tempo.py) | Merges SMS, calls, Chrome history and installed apps into a single timeline, with timestamps already converted to UTC and UTC-3. Every source is optional — use whichever ones you have. Before opening a database, it copies it (plus any neighboring `-wal`/`-shm` files) into a temp folder, so the original is never touched and data still sitting in the WAL is included. Can filter to a single day and export CSV. |
 
 ```bash
 python ferramentas/analisa_packages.py path/packages.xml
 python ferramentas/analisa_packages.py path/packages.xml --so-usuario
 python ferramentas/analisa_packages.py path/packages.xml --csv output.csv
+
+python ferramentas/linha_do_tempo.py --sms mmssms.db --chrome History --calls calllog.db --packages packages.xml --csv timeline.csv
+python ferramentas/linha_do_tempo.py --sms mmssms.db --chrome History --dia 2025-11-03
 ```
 
 ## Tools used
