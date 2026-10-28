@@ -9,6 +9,10 @@ Uso:
 O script apenas LE o arquivo. Nunca grava nada na pasta da evidencia.
 Datas: o packages.xml guarda 'it' (primeira instalacao) e 'ut' (ultima
 atualizacao) em milissegundos Unix escritos em hexadecimal.
+
+PRIMEIRO e ULTIMO: sao calculados so entre os apps de USUARIO (/data/app).
+Os apps de sistema vem do firmware e quase todos tem a mesma data, entao
+"o primeiro instalado" entre eles nao diz nada sobre o dono do aparelho.
 """
 import argparse
 import csv
@@ -25,12 +29,22 @@ SENSIVEIS = {
     "BIND_ACCESSIBILITY_SERVICE", "REQUEST_INSTALL_PACKAGES",
 }
 
+# Colunas do CSV, na ordem em que aparecem.
+CAMPOS = [
+    "ordem_instalacao", "marca", "pacote", "instalado_em", "atualizado_em",
+    "instalador", "caminho", "n_permissoes", "n_concedidas", "sensiveis",
+]
 
-def hex_para_data(valor):
-    """Converte '198d35fa587' (hex, ms Unix) em 'AAAA-MM-DD HH:MM:SS' (UTC-3)."""
-    if not valor:
+
+def hex_para_ms(valor):
+    """Converte '198d35fa587' (hexadecimal) em milissegundos Unix (inteiro)."""
+    return int(valor, 16) if valor else 0
+
+
+def ms_para_data(ms):
+    """Converte milissegundos Unix em 'AAAA-MM-DD HH:MM:SS' (UTC-3)."""
+    if not ms:
         return ""
-    ms = int(valor, 16)
     return datetime.fromtimestamp(ms / 1000, FUSO).strftime("%Y-%m-%d %H:%M:%S")
 
 
@@ -43,10 +57,14 @@ def ler_pacotes(caminho):
         itens = list(perms) if perms is not None else []
         concedidas = [i.get("name") for i in itens if i.get("granted") == "true"]
         sensiveis = sorted({n.split(".")[-1] for n in concedidas} & SENSIVEIS)
+        instalado = hex_para_ms(p.get("it"))
         pacotes.append({
+            "ordem_instalacao": "",   # preenchido depois, so para apps de usuario
+            "marca": "",              # PRIMEIRO ou ULTIMO, idem
             "pacote": p.get("name"),
-            "instalado_em": hex_para_data(p.get("it")),
-            "atualizado_em": hex_para_data(p.get("ut")),
+            "instalado_ms": instalado,  # uso interno (ordenacao exata), nao vai ao CSV
+            "instalado_em": ms_para_data(instalado),
+            "atualizado_em": ms_para_data(hex_para_ms(p.get("ut"))),
             "instalador": p.get("installer", "-"),
             "caminho": p.get("codePath", ""),
             "n_permissoes": len(itens),
@@ -61,6 +79,21 @@ def eh_de_usuario(pacote):
     return pacote["caminho"].startswith("/data/app")
 
 
+def marcar_ordem(pacotes):
+    """Numera os apps de usuario por data de instalacao e marca o primeiro e o ultimo.
+
+    Devolve a lista de apps de usuario ja em ordem cronologica.
+    """
+    usuario = sorted((p for p in pacotes if eh_de_usuario(p)),
+                     key=lambda p: p["instalado_ms"])
+    for numero, p in enumerate(usuario, start=1):
+        p["ordem_instalacao"] = numero
+    if usuario:
+        usuario[0]["marca"] = "PRIMEIRO"
+        usuario[-1]["marca"] = "ULTIMO"
+    return usuario
+
+
 def main():
     ap = argparse.ArgumentParser(description="Resumo do packages.xml")
     ap.add_argument("xml", help="caminho do packages.xml")
@@ -69,26 +102,37 @@ def main():
     args = ap.parse_args()
 
     pacotes = ler_pacotes(args.xml)
-    usuario = [p for p in pacotes if eh_de_usuario(p)]
+    usuario = marcar_ordem(pacotes)
     lista = usuario if args.so_usuario else pacotes
 
     print(f"Total de pacotes: {len(pacotes)}")
     print(f"  de usuario (/data/app): {len(usuario)}")
     print(f"  de sistema: {len(pacotes) - len(usuario)}")
 
-    print("\nMais recentes (primeira instalacao, UTC-3):")
-    for p in sorted(lista, key=lambda x: x["instalado_em"], reverse=True)[:10]:
-        print(f"  {p['instalado_em']}  {p['pacote']}  (instalador: {p['instalador']})")
+    if usuario:
+        print("\nApps de usuario em ordem de instalacao (UTC-3):")
+        for p in usuario:
+            sufixo = f"   <-- {p['marca']}" if p["marca"] else ""
+            print(f"  {p['ordem_instalacao']:2d}  {p['instalado_em']}  {p['pacote']}"
+                  f"  (instalador: {p['instalador']}){sufixo}")
+        if len({p["instalado_ms"] // 1000 for p in usuario}) < len(usuario):
+            print("  Obs.: ha apps com o mesmo segundo de instalacao; a ordem entre eles"
+                  " e so de leitura.")
 
-    print("\nMais permissoes concedidas:")
-    for p in sorted(lista, key=lambda x: x["n_concedidas"], reverse=True)[:10]:
+    print("\nApps de usuario com mais permissoes concedidas:")
+    for p in sorted(usuario, key=lambda x: x["n_concedidas"], reverse=True)[:10]:
         print(f"  {p['n_concedidas']:3d}  {p['pacote']}  {p['sensiveis']}")
 
     if args.csv:
-        with open(args.csv, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(lista[0].keys()))
+        if not lista:
+            print("\nNada para salvar no CSV.")
+            return
+        # CSV em ordem cronologica; extrasaction="ignore" descarta 'instalado_ms'.
+        linhas = sorted(lista, key=lambda p: p["instalado_ms"])
+        with open(args.csv, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.DictWriter(f, fieldnames=CAMPOS, extrasaction="ignore")
             w.writeheader()
-            w.writerows(lista)
+            w.writerows(linhas)
         print(f"\nCSV salvo em: {args.csv}")
 
 

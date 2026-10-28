@@ -24,7 +24,7 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 
 | Script | O que faz |
 |---|---|
-| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Resume o `packages.xml` de uma extração Android: total de pacotes, quantos são de usuário vs. de sistema, os 10 mais recentes e os 10 com mais permissões concedidas, com exportação pra CSV. Só lê o arquivo — nunca grava nada na pasta da evidência. |
+| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Resume o `packages.xml` de uma extração Android: total de pacotes, quantos são de usuário vs. de sistema, os apps de usuário numerados em ordem cronológica de instalação (primeiro e último marcados — só entre os de usuário, já que os de firmware têm quase todos a mesma data) e os 10 de usuário com mais permissões concedidas. Exporta CSV (abre direto no Excel), já em ordem cronológica mas reordenável por qualquer coluna. Só lê o arquivo — nunca grava nada na pasta da evidência. |
 
 ```bash
 python ferramentas/analisa_packages.py caminho/packages.xml

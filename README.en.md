@@ -24,7 +24,7 @@ If an example below uses a case name, a company or a question number, it's **fic
 
 | Script | What it does |
 |---|---|
-| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Summarizes the `packages.xml` from an Android extraction: total packages, how many are user vs. system, the 10 most recent and the 10 with the most granted permissions, with CSV export. Only reads the file — never writes anything into the evidence folder. |
+| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Summarizes the `packages.xml` from an Android extraction: total packages, how many are user vs. system, user apps numbered in chronological install order (first and last flagged — only among user apps, since firmware apps mostly share the same date) and the 10 user apps with the most granted permissions. Exports a CSV (opens straight in Excel), already in chronological order but re-sortable by any column. Only reads the file — never writes anything into the evidence folder. |
 
 ```bash
 python ferramentas/analisa_packages.py path/packages.xml
