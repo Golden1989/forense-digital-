@@ -19,7 +19,7 @@ Small scripts that save time when answering forensic questions: date conversion,
    python --version
    ```
    If you get "not recognized", try `py --version` and use `py` instead of `python` in the commands.
-4. Ask any script for help (all of them except `convert_date.py` and `sessao_chrome.py` accept `--help`):
+4. Ask any script for help (all of them except `sessao_chrome.py` accept `--help`):
    ```powershell
    python ferramentas\linha_do_tempo.py --help
    ```
@@ -55,12 +55,12 @@ Syntax rules:
 | Show only one site in the timeline | `linha_do_tempo.py` | `--filtro` |
 | Which page was open when Chrome closed? | `sessao_chrome.py` | (single argument) |
 | Are there favicons for pages that are not in the history (cleared history?) | `favicons_fora_do_historico.py` | (two comparisons, A and B) |
-| What date is this number? | `convert_date.py` | (interactive) |
-| What was downloaded by the browser, from where and to where? | `downloads_chrome.py` | `--filtro` |
-| General browsing summary: most visited domains/URLs, searches, visits per day | `resumo_navegacao.py` | `--site`, `--por-dia` |
-| I don't know what's in this SQLite database or where the dates are | `mapa_sqlite.py` | `--so-datas` |
-| Who is this number? Any deleted contact? Numbers missing from the address book? | `contatos_merge.py` | `--so-apagados` |
-| Was this photo edited? Does the date match the GPS? | `exif_fotos.py` | `--so-alertas` |
+| First / last / middle visit of a site, most visited, redirect pages, searches | `resumo_navegacao.py` | `--site`, `--por-dia` |
+| Which URL was used to download a file? When and where to? | `downloads_chrome.py` | `--filtro` |
+| Which tables does this unknown database have, and where are the dates? | `mapa_sqlite.py` | `--so-datas`, `--tabela` |
+| Phone model, dates and GPS of photos; any inconsistency? | `exif_fotos.py` | `--so-alertas` |
+| Contacts + calls + SMS together; deleted contacts; numbers not in the address book | `contatos_merge.py` | `--so-apagados` |
+| What date is this number? | `convert_date.py` | (value on the command line) |
 
 ## 3. The scripts
 
@@ -133,93 +133,131 @@ python ferramentas\favicons_fora_do_historico.py --favicons "C:\evidence\Favicon
 
 Interpretation: a difference **does not prove** history was cleared. Chrome-generated pages and CDNs show up here. Report it as a fact.
 
-### `convert_date.py` — date converter
+### `resumo_navegacao.py` — Chrome history summary
 
-Interactive: asks for the number and the time zone and guesses the format from the digit count.
-
-```powershell
-python ferramentas\convert_date.py
-```
-
-Quick reference:
-
-| Digits | Format | Where it appears |
-|---|---|---|
-| 9 | Cocoa, seconds since 2001 | iOS |
-| 10 | Unix, seconds since 1970 | SQLite, Linux |
-| 13 | Unix, milliseconds | Android (SMS, calls) |
-| 16 | Unix, microseconds | Firefox |
-| 17 | microseconds since 1601 | Chrome, Edge |
-| 18 | FILETIME, 100 ns since 1601 | **Windows** (Registry, Prefetch, EVTX) |
-| 18 | Cocoa, nanoseconds since 2001 | recent iOS |
-
-**Known limitation:** 18-digit Windows values (FILETIME, ~1.3e17) are treated as Cocoa nanoseconds and give a wrong date (for example, 2026 becomes 2005). For FILETIME, check by hand: `(value / 10_000_000) - 11644473600` gives Unix seconds. On Windows, zone names such as `America/Sao_Paulo` need the `tzdata` package (`pip install tzdata`); a number (`-3`) always works.
-
-### `downloads_chrome.py` — browser downloads
-
-Reads the `downloads` and `downloads_url_chains` tables from `History` (Chrome/Edge/Brave). Shows the file name and destination folder, the URL used to download and the final URL (if redirected), the originating page, start/end/duration, size, state, danger classification and hash (when the browser kept one).
+Joins `urls`, `visits` and `keyword_search_terms` from `History` and answers in one go: first and last visit (overall and per domain), **middle visit** (the one in the middle of the time-sorted list), most visited domains and URLs, **pass-through pages** (redirects, such as the gov.br single sign-on), search terms and visits per day.
 
 ```powershell
-python ferramentas\downloads_chrome.py "C:\evidence\History" --fuso -3 --csv downloads.csv
-```
-
-Warning: `History` records that the browser **downloaded** the file; whether it still exists on disk, or was opened/run, must be confirmed from another source (file system, Prefetch, etc.).
-
-### `resumo_navegacao.py` — general browsing summary
-
-Joins `urls`, `visits` and `keyword_search_terms` and answers the most common questions at once: first/last/middle visit (overall, per domain or for a chosen site), most visited domains and URLs, pass-through pages (redirects) and searched terms.
-
-```powershell
-python ferramentas\resumo_navegacao.py "C:\evidence\History" --site gov.br --por-dia
+python ferramentas\resumo_navegacao.py "C:\evidence\History" --fuso utc
+python ferramentas\resumo_navegacao.py "C:\evidence\History" --site gov.br --url-completa
+python ferramentas\resumo_navegacao.py "C:\evidence\History" --dia 2025-11-03 --por-dia --csv domains.csv
 ```
 
 | Option | Effect |
 |---|---|
-| `--site text` | only details URLs containing this text |
-| `--dia YYYY-MM-DD` | only this day (in the chosen time zone) |
-| `--por-dia` | shows the visit count per day |
-| `--csv file.csv` | saves the per-domain table |
+| `--fuso` | `utc` (default) or hours (`-3`) |
+| `--site text` | details only URLs containing the text: first, middle and last visit, navigation types and redirects |
+| `--dia YYYY-MM-DD` | only that day (in the chosen time zone) |
+| `--top N` | size of the rankings (default 10) |
+| `--por-dia` | visits per day, with bars |
+| `--url-completa` | do not truncate URLs |
+| `--csv file.csv` | per-domain table: visits, first, middle, last |
+
+Cautions: "visits" here are rows of the `visits` table (each access); `urls.visit_count` may differ. "Middle" is the visit in the middle by time, not the redirect *page*: for that, see the "pass-through pages" section (role `inicio` = start, `passagem` = hop, `fim` = end of the chain).
+
+### `downloads_chrome.py` — Chrome downloads
+
+Joins `downloads` and `downloads_url_chains`. For each file: name and folder, the **URL used to download** (start of the chain), the final URL (if redirected), source page, start, end, duration, size, state, danger classification and whether it was opened.
+
+```powershell
+python ferramentas\downloads_chrome.py "C:\evidence\History" --fuso -3
+python ferramentas\downloads_chrome.py "C:\evidence\History" --filtro .zip --csv downloads.csv
+```
+
+| Option | Effect |
+|---|---|
+| `--fuso` | `utc` (default) or hours |
+| `--filtro text` | only downloads whose name, URL or source page contain the text |
+| `--url-completa` | do not truncate URLs |
+| `--csv file.csv` | saves everything, including hash, MIME type and last access |
+
+`History` shows that Chrome recorded the download. Whether the file still exists or was executed needs another source (file system, Prefetch, Event Log).
 
 ### `mapa_sqlite.py` — map of an unknown database
 
-For any SQLite database (WhatsApp, messaging apps, Android/iOS app databases), shows per table: row count, columns, how many have a value, an example, and, most importantly, **which columns look like dates**, in what format, and the converted range. A starting point for a database you've never seen.
+For each table: row count, columns, type, how many rows have a value, an example and **which columns look like dates** (format and range already converted). A good starting point for app databases (WhatsApp, messengers, etc.).
 
 ```powershell
-python ferramentas\mapa_sqlite.py "C:\evidence\some_database.db" --so-datas
+python ferramentas\mapa_sqlite.py "C:\evidence\database.db" --fuso -3
+python ferramentas\mapa_sqlite.py "C:\evidence\database.db" --so-datas
+python ferramentas\mapa_sqlite.py "C:\evidence\database.db" --tabela messages --amostra 5
 ```
 
-Detects dates from the order of magnitude of the number — it's a **clue**, not proof; check the column name and a few values.
+| Option | Effect |
+|---|---|
+| `--so-datas` | list only date-like columns |
+| `--tabela name` | only that table (exact name) |
+| `--amostra N` | with `--tabela`, show N sample rows |
+| `--fuso` | time zone of converted dates |
+
+Detection looks at the magnitude of the number (up to 500 values per column, accepts only dates between 2005 and next year). It is a **hint**: 9–10 digit IDs can look like dates, and the script warns when the column name does not suggest a date. Confirm with the column name and a few values.
+
+### `exif_fotos.py` — EXIF and inconsistencies in photos
+
+Reads JPEG EXIF **with nothing to install** (own reader) and shows make, model, software, `DateTime`, `DateTimeOriginal`, `DateTimeDigitized`, time zone (`OffsetTime`), GPS and the file-system dates. It flags with `[!]`: no EXIF, `DateTime` or `DateTimeDigitized` different from `DateTimeOriginal`, Software field filled in, GPS time inconsistent with local date + offset, file modified before capture.
+
+```powershell
+python ferramentas\exif_fotos.py "C:\evidence\DCIM\Camera"
+python ferramentas\exif_fotos.py "C:\evidence\DCIM" --so-alertas --hash --csv photos.csv
+```
+
+| Option | Effect |
+|---|---|
+| `--so-alertas` | only photos with `[!]` |
+| `--hash` | include each photo's SHA-256 |
+| `--csv file.csv` | save the table |
+
+Limits: JPEG only (PNG, HEIC, etc. show as "no EXIF"). EXIF dates are the device's local time; file-system dates measure something else (extraction, copy). An alert is a hint, not a conclusion: record the fact and keep the inconsistency open until another source confirms it.
 
 ### `contatos_merge.py` — contacts + calls + SMS
 
-Cross-references `contacts2.db` (address book) with calls and SMS by phone number (matches only the last 9 digits, so `+55 11 9...`, `011 9...` and `9...` are treated as the same number). For each contact, shows name, phone numbers, emails, source account, whether it's marked deleted/trashed, linked apps (WhatsApp, Signal, Telegram...), and, per number, how many calls/SMS and their first/last timestamp. At the end, lists numbers that appear in calls/SMS but are missing from the address book.
+Cross-references by phone number: `contacts2.db` (who the contact is), `calllog.db` (calls) and `mmssms.db` (SMS). It groups `raw_contacts` by `contact_id` (the same person appears once per account: phone, Google, Signal...), and shows name, phones, e-mails, accounts, linked apps, deleted/in trash, plus per contact the count, first and last call and SMS. At the end it lists the **numbers that appear in calls/SMS but are not in the address book**.
 
 ```powershell
-python ferramentas\contatos_merge.py --contacts "C:\evidence\contacts2.db" --calls "C:\evidence\calllog.db" --sms "C:\evidence\mmssms.db" --fuso -3
+python ferramentas\contatos_merge.py --contacts "C:\evidence\contacts2.db" `
+  --calls "C:\evidence\calllog.db" --sms "C:\evidence\mmssms.db" --fuso -3 --csv contacts.csv
+python ferramentas\contatos_merge.py --contacts "C:\evidence\contacts2.db" --so-apagados
 ```
 
 | Option | Effect |
 |---|---|
-| `--so-apagados` | only contacts marked deleted/trashed |
-| `--csv file.csv` | saves the contacts table |
+| `--contacts` | `contacts2.db` (required) |
+| `--calls` | `calllog.db`, or another database with a `calls` table (optional) |
+| `--sms` | `mmssms.db` (optional) |
+| `--so-apagados` | only contacts marked as deleted or in trash |
+| `--fuso`, `--csv` | as in the other scripts |
 
-On Samsung devices, `contacts2.db` and `calllog.db` live under `com.samsung.android.providers.contacts/databases`; on stock Android, calls live inside `contacts2.db` itself (`calls` table).
+Number matching: digits only, comparing the last 9 (ignores `+55`, the area-code zero). Short numbers (like 611) match only if identical. On Samsung, `contacts2.db` and `calllog.db` live in `com.samsung.android.providers.contacts/databases`; keep the `-wal` and `-shm` files next to them.
 
-### `exif_fotos.py` — photo EXIF and inconsistencies
+### `convert_date.py` — date converter
 
-Reads EXIF from JPEGs with no dependencies (a small built-in parser) and flags what deserves attention: no EXIF at all (screenshot, re-sent via an app), `DateTime` different from `DateTimeOriginal` (edited afterwards), a filled-in `Software` field, GPS time inconsistent with the local date, or a file modified on disk before its capture time.
+Guesses the format from the digit count and **also shows the other plausible readings** (between 2010 and 2035), because some formats get confused. Accepts decimal and hexadecimal.
 
 ```powershell
-python ferramentas\exif_fotos.py "C:\evidence\photos" --hash --so-alertas --csv photos.csv
+python ferramentas\convert_date.py 1762202574476 --fuso -3
+python ferramentas\convert_date.py 134159021410000000 --fuso utc
+python ferramentas\convert_date.py 0x198d35fa587 --fuso -3
+python ferramentas\convert_date.py 1762202574476 --formato unix-us
+python ferramentas\convert_date.py                      # no arguments: asks for the value and time zone
 ```
 
 | Option | Effect |
 |---|---|
-| `--hash` | computes SHA-256 for each photo |
-| `--so-alertas` | shows only photos with a `[!]` flag |
-| `--csv file.csv` | saves the table |
+| `valor` | number (decimal, `0x...` or plain hexadecimal) |
+| `--fuso` | `utc` (default), hours (`-3`, `-3:30`) or name (`America/Sao_Paulo`, needs `pip install tzdata` on Windows) |
+| `--formato` | force a format: `cocoa-s`, `unix-s`, `unix-ms`, `unix-us`, `webkit`, `filetime`, `cocoa-ns` |
 
-Flags are **clues**, not proof: record them as facts ("Software field set to X"), never as a conclusion ("the photo was edited").
+| Digits | Format (`--formato`) | Where it appears |
+|---|---|---|
+| 9 | Cocoa, seconds since 2001 (`cocoa-s`) | iOS |
+| 10 | Unix, seconds since 1970 (`unix-s`) | SQLite, Linux |
+| 13 | Unix, milliseconds (`unix-ms`) | Android (SMS, calls) |
+| 16 | Unix, microseconds (`unix-us`) | Firefox |
+| 17 | microseconds since 1601 (`webkit`) | Chrome, Edge |
+| 18 | FILETIME, 100 ns since 1601 (`filetime`) | **Windows** (Registry, Prefetch, EVTX) |
+| 18 | Cocoa, nanoseconds since 2001 (`cocoa-ns`) | recent iOS |
+
+The two 18-digit formats are told apart by value range (FILETIME from 1970 to 2235 sits between 1.16e17 and 2e17). If the context points to the other one, use `--formato`. Values outside every range are read as Cocoa seconds.
 
 ## 4. Conversions inside SQLite (no Python)
 
@@ -252,3 +290,4 @@ SELECT datetime(visit_time/1000000 - 11644473600, 'unixepoch', '-3 hours') FROM 
 | `no such table: calls` | The database was opened without its `-wal`; keep the 3 files together |
 | Empty output with `--dia` | The day is read in the `--fuso` zone; check the zone |
 | `Este arquivo não parece ser uma sessão do Chrome` | The `SNSS` header is missing; it is another file type |
+| `Tabela 'downloads' nao encontrada` | The file is not a Chromium `History` (check name and folder) |
