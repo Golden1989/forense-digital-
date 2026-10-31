@@ -19,22 +19,11 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 | [`docs/sleuthkit.md`](docs/sleuthkit.md) | Referência de comandos do Sleuth Kit (TSK), organizada pelas 6 camadas de uma imagem, com receitas prontas de terminal (Linux/WSL) |
 | [`docs/iped.md`](docs/iped.md) | Guia do IPED: processar, analisar, marcadores, exportação, configuração, anatomia de disco |
 | [`docs/registro-windows.md`](docs/registro-windows.md) | Registro do Windows: hives, UserAssist, Prefetch, RunMRU, RecentDocs, USBSTOR/MountedDevices, Event Log, Windows Search, com quiz de revisão |
+| [`docs/ferramentas.md`](docs/ferramentas.md) | Scripts em Python da pasta `ferramentas/`: como rodar, opções explicadas, qual script responde qual quesito (linha do tempo, apps instalados, sessão do Chrome, favicons, datas) |
 
 ## Scripts
 
-| Script | O que faz |
-|---|---|
-| [`ferramentas/analisa_packages.py`](ferramentas/analisa_packages.py) | Resume o `packages.xml` de uma extração Android: total de pacotes, quantos são de usuário vs. de sistema, os apps de usuário numerados em ordem cronológica de instalação (primeiro e último marcados — só entre os de usuário, já que os de firmware têm quase todos a mesma data) e os 10 de usuário com mais permissões concedidas. Exporta CSV (abre direto no Excel), já em ordem cronológica mas reordenável por qualquer coluna. Só lê o arquivo — nunca grava nada na pasta da evidência. |
-| [`ferramentas/linha_do_tempo.py`](ferramentas/linha_do_tempo.py) | Junta SMS, chamadas, histórico do Chrome e apps instalados numa única linha do tempo, com os horários já convertidos para UTC e UTC-3. Cada fonte é opcional — usa as que você tiver. Antes de abrir, copia cada banco (junto com os arquivos `-wal`/`-shm` vizinhos) para uma pasta temporária, então o original nunca é tocado e os dados ainda no WAL entram na leitura. Pode filtrar por um dia específico e exportar CSV. |
-
-```bash
-python ferramentas/analisa_packages.py caminho/packages.xml
-python ferramentas/analisa_packages.py caminho/packages.xml --so-usuario
-python ferramentas/analisa_packages.py caminho/packages.xml --csv saida.csv
-
-python ferramentas/linha_do_tempo.py --sms mmssms.db --chrome History --calls calllog.db --packages packages.xml --csv linha.csv
-python ferramentas/linha_do_tempo.py --sms mmssms.db --chrome History --dia 2025-11-03
-```
+Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (nunca gravam nada nela) e automatizam perguntas comuns de quesito — apps instalados, linha do tempo unificada, sessão do Chrome, downloads, resumo de navegação, favicons fora do histórico, mapa de um banco SQLite desconhecido, contatos/chamadas/SMS, EXIF de fotos e conversor de datas. Passo a passo, opções de cada um e qual script usar para qual pergunta: [`docs/ferramentas.md`](docs/ferramentas.md).
 
 ## Ferramentas usadas
 
