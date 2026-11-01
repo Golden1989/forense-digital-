@@ -31,6 +31,8 @@ Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (
 - [The Sleuth Kit](https://www.sleuthkit.org/) 4.12.1, via WSL (Ubuntu)
 - [IPED](https://github.com/sepinf-inc/IPED) 4.3.1
 - FTK Imager
+- [DB Browser for SQLite](https://sqlitebrowser.org/)
+- [Registry Explorer](https://ericzimmerman.github.io/) (Eric Zimmerman)
 
 ## Sobre
 

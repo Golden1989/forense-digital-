@@ -31,6 +31,8 @@ If an example below uses a case name, a company or a question number, it's **fic
 - [The Sleuth Kit](https://www.sleuthkit.org/) 4.12.1, via WSL (Ubuntu)
 - [IPED](https://github.com/sepinf-inc/IPED) 4.3.1
 - FTK Imager
+- [DB Browser for SQLite](https://sqlitebrowser.org/)
+- [Registry Explorer](https://ericzimmerman.github.io/) (Eric Zimmerman)
 
 ## About
 
