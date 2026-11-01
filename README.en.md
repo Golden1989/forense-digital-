@@ -19,6 +19,7 @@ If an example below uses a case name, a company or a question number, it's **fic
 | [`docs/en/sleuthkit.md`](docs/en/sleuthkit.md) | Sleuth Kit (TSK) command reference, organized by the 6 layers of an image, with ready-to-run terminal recipes (Linux/WSL) |
 | [`docs/en/iped.md`](docs/en/iped.md) | IPED guide: processing, analysis, bookmarks, export, configuration, disk anatomy |
 | [`docs/en/windows-registry.md`](docs/en/windows-registry.md) | Windows Registry: hives, UserAssist, Prefetch, RunMRU, RecentDocs, USBSTOR/MountedDevices, Event Log, Windows Search, with a review quiz |
+| [`docs/en/smartphone.md`](docs/en/smartphone.md) | Android and iOS forensics: extraction levels, BFU/AFU, SQLite (WAL/SHM), each system's artifacts, date formats, Chrome, ADB, forensic reasoning, with a review quiz |
 | [`docs/en/tools.md`](docs/en/tools.md) | Python scripts in `ferramentas/`: how to run them, options explained, which script answers which question (timeline, installed apps, Chrome session, favicons, dates) |
 
 ## Scripts

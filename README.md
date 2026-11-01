@@ -19,6 +19,7 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 | [`docs/sleuthkit.md`](docs/sleuthkit.md) | Referência de comandos do Sleuth Kit (TSK), organizada pelas 6 camadas de uma imagem, com receitas prontas de terminal (Linux/WSL) |
 | [`docs/iped.md`](docs/iped.md) | Guia do IPED: processar, analisar, marcadores, exportação, configuração, anatomia de disco |
 | [`docs/registro-windows.md`](docs/registro-windows.md) | Registro do Windows: hives, UserAssist, Prefetch, RunMRU, RecentDocs, USBSTOR/MountedDevices, Event Log, Windows Search, com quiz de revisão |
+| [`docs/smartphone.md`](docs/smartphone.md) | Perícia em Android e iOS: níveis de extração, BFU/AFU, SQLite (WAL/SHM), artefatos de cada sistema, formatos de data, Chrome, ADB, raciocínio pericial, com quiz de revisão |
 | [`docs/ferramentas.md`](docs/ferramentas.md) | Scripts em Python da pasta `ferramentas/`: como rodar, opções explicadas, qual script responde qual quesito (linha do tempo, apps instalados, sessão do Chrome, favicons, datas) |
 
 ## Scripts
