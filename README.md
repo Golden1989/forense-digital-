@@ -36,4 +36,4 @@ Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (
 
 ## Sobre
 
-Estudante de perícia forense digital, organizando o que aprendo em aula e nos meus próprios testes. Notas escritas com ajuda do Claude enquanto eu usava as ferramentas pela primeira vez.
+Estudante de perícia forense digital, organizando o que aprendo em aula e nos meus próprios testes. 
