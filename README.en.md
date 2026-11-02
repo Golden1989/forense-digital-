@@ -36,4 +36,4 @@ If an example below uses a case name, a company or a question number, it's **fic
 
 ## About
 
-Digital forensics student, organizing what I learn in class and in my own testing. Notes written with Claude's help while using these tools for the first time.
+Digital forensics student, organizing what I learn in class and in my own testing. 
