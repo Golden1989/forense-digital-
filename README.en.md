@@ -10,11 +10,14 @@ The forensic image and the solved report are left out on purpose. They're course
 
 If an example below uses a case name, a company or a question number, it's **fictional**, written only to illustrate the method.
 
+**Exception:** [`docs/en/fictional-case.md`](docs/en/fictional-case.md) uses a **public** forensic image (unrelated to the course) to show this repository's scripts working on a fictional investigation end to end — questions, findings and conclusion.
+
 ## Contents
 
 | File | Content |
 |---|---|
 | [`docs/en/methodology.md`](docs/en/methodology.md) | How to approach an image "in the dark": investigation order, how to define the questions to answer, what makes a file suspicious |
+| [`docs/en/fictional-case.md`](docs/en/fictional-case.md) | Complete fictional case using a public image (Digital Corpora): questions, findings and conclusion using this repository's scripts |
 | [`docs/en/hashes.md`](docs/en/hashes.md) | How to hash a forensic image (PowerShell and WSL), MD5/SHA-1/SHA-256/SHA-512, and why the `.E01` file's hash differs from the acquired content's hash |
 | [`docs/en/sleuthkit.md`](docs/en/sleuthkit.md) | Sleuth Kit (TSK) command reference, organized by the 6 layers of an image, with ready-to-run terminal recipes (Linux/WSL) |
 | [`docs/en/iped.md`](docs/en/iped.md) | IPED guide: processing, analysis, bookmarks, export, configuration, disk anatomy |

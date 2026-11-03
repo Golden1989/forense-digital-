@@ -10,11 +10,14 @@ Imagem forense e laudo resolvido ficam de fora de propósito. São material de a
 
 Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, escrito só pra ilustrar o método.
 
+**Exceção:** [`docs/caso-ficticio.md`](docs/caso-ficticio.md) usa uma imagem forense **pública** (sem relação com a disciplina) pra mostrar os scripts deste repositório funcionando numa investigação fictícia de ponta a ponta — quesitos, achados e conclusão.
+
 ## Conteúdo
 
 | Arquivo | Conteúdo |
 |---|---|
 | [`docs/metodologia.md`](docs/metodologia.md) | Como abordar uma imagem "no escuro": ordem de investigação, como definir quesitos, o que faz um arquivo ser suspeito |
+| [`docs/caso-ficticio.md`](docs/caso-ficticio.md) | Caso fictício completo com imagem pública (Digital Corpora): quesitos, achados e conclusão usando os scripts deste repositório |
 | [`docs/hashes.md`](docs/hashes.md) | Como calcular o hash de uma imagem forense (PowerShell e WSL), MD5/SHA-1/SHA-256/SHA-512, e por que o hash do arquivo `.E01` é diferente do hash do conteúdo adquirido |
 | [`docs/sleuthkit.md`](docs/sleuthkit.md) | Referência de comandos do Sleuth Kit (TSK), organizada pelas 6 camadas de uma imagem, com receitas prontas de terminal (Linux/WSL) |
 | [`docs/iped.md`](docs/iped.md) | Guia do IPED: processar, analisar, marcadores, exportação, configuração, anatomia de disco |
