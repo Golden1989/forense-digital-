@@ -31,7 +31,7 @@ Todos os comandos abaixo foram rodados com os scripts de [`ferramentas/`](../fer
 python ferramentas/resumo_navegacao.py History --site magisk --fuso -5
 python ferramentas/downloads_chrome.py History --fuso -5
 python ferramentas/analisa_packages.py packages.xml --so-usuario --fuso -5
-python ferramentas/linha_do_tempo.py --sms mmssms.db --calls calllog.db --chrome History --fuso -5 --dia 2020-01-29
+python ferramentas/linha_do_tempo.py --sms mmssms.db --calls calllog.db --chrome History --packages packages.xml --fuso -5 --dia 2020-01-29
 python ferramentas/contatos_merge.py --contacts contacts2.db --calls calllog.db --sms mmssms.db --fuso -5
 python ferramentas/favicons_fora_do_historico.py --favicons Favicons --history History --fuso -5
 ```
@@ -64,30 +64,41 @@ ultima:         2020-02-14 16:58:15  https://magiskmanager.com/downloading-magis
    inicio: 2020-02-14 16:58:20
 ```
 
-**Inconclusivo pelo `History` isoladamente.** As duas tentativas de download aparecem como **"cancelado"** na tabela `downloads` — o que, à primeira vista, sugeriria que o app nunca chegou a ser instalado por essa via. Esse é exatamente o tipo de achado que não pode ser fechado com um único artefato: o `History` registra o que o *Chrome* sabe sobre o download, não se o APK foi de fato instalado depois (isso ficaria em artefatos como o log de instalação de pacotes do sistema, fora do escopo dos scripts atuais). Vale registrar a ressalva: "download cancelado" não equivale a "ferramenta não instalada".
+Pelo `History` isoladamente, as duas tentativas de download aparecem como **"cancelado"** na tabela `downloads` — o que, sozinho, sugeriria que o app nunca chegou a ser instalado por essa via. Mas `analisa_packages.py packages.xml --fuso -5` mostra outra coisa: o próprio pacote do Magisk está instalado no aparelho, com instalação **1 minuto e 4 segundos** depois da última visita à página de download:
+
+```
+53  2020-01-29 11:35:03  com.topjohnwu.magisk  (instalador: com.google.android.packageinstaller)
+```
+
+**Sim, confirmado — mas só ao cruzar duas fontes.** O instalador é `com.google.android.packageinstaller`, não a Play Store (`com.android.vending`), exatamente o que se espera de um APK baixado e instalado manualmente, e não houve atualização posterior (`atualizado_em` é igual a `instalado_em`). Isso ilustra bem por que não se deve fechar uma resposta com um único artefato: o `History` registra apenas o que o *Chrome* sabe sobre o download (e aqui ele mostra "cancelado", possivelmente porque o arquivo foi retomado ou finalizado por outro caminho que o `History` não captura); o `packages.xml` é quem confirma que o APK foi, de fato, instalado.
 
 ### Quesito 3 — apps instalados e permissões sensíveis
 
 `analisa_packages.py packages.xml --fuso -5` (sem `--so-usuario`, pra ver o ranking completo) mostra, entre os apps de usuário, vários com a permissão `SYSTEM_ALERT_WINDOW` (desenhar sobre outros apps) concedida — inclusive apps de mensageria (`com.facebook.orca`, `com.viber.voip`) e o próprio discador do aparelho (`com.google.android.dialer`).
 
-Rodando com `--so-usuario --fuso -5`, chama atenção que **a maioria dos 82 apps de usuário tem a mesma data de instalação** (29/01/2020, por volta das 19h UTC-5 — hora de ativação do aparelho), e não datas espalhadas pelo período investigado:
+Rodando com `--so-usuario --fuso -5`, a lista mistura dois grupos bem diferentes de data:
 
 ```
  1  2008-12-31 19:00:00  com.google.android.youtube  (instalador: com.android.vending)   <-- PRIMEIRO
  2  2008-12-31 19:00:00  com.google.android.googlequicksearchbox  (instalador: com.android.vending)
  ...
+58  2020-01-29 12:02:47  com.discord  (instalador: com.android.vending)
+ ...
 ```
 
-**Achado relevante, mas com ressalva.** Isso é exatamente o aviso que já está documentado no próprio script: apps empurrados durante o provisionamento inicial da conta Google compartilham a data de ativação, não a data real de uso/instalação pelo usuário. Antes de apontar "o usuário instalou N apps no dia X", é preciso separar esse lote inicial dos apps genuinamente instalados depois (ex.: os de mensageria instantânea, que o `packages.xml` mostra como instalados minutos depois, já na janela de interesse).
+**Atenção ao ler essas datas: `2008-12-31`/`2009` não é uma instalação real.** É o valor-padrão que o próprio Android grava no `packages.xml` quando o app não tem uma data de instalação individual registrada (de novo, típico dos apps pré-instalados pelo fabricante/Google, mesmo os que ficam tecnicamente em `/data/app`) — é só uma coincidência de fuso que, em UTC-5, esse valor-padrão cai em 31/12/2008 às 19h em vez de já virar 2009. A maioria dos 82 apps de usuário tem essa data-padrão; são os poucos com data real de **29/01/2020** (como `com.discord` acima, ou o próprio `com.topjohnwu.magisk` do quesito 2) que de fato dizem algo sobre o que o usuário instalou nesse dia. Antes de apontar "o usuário instalou N apps no dia X", é preciso separar esse lote de data-padrão dos apps genuinamente instalados depois.
 
 ### Quesito 4 — linha do tempo de 29/01/2020
 
-`linha_do_tempo.py --dia 2020-01-29` junta Chrome, SMS e chamadas numa sequência só:
+`linha_do_tempo.py --packages packages.xml --dia 2020-01-29` junta Chrome, SMS, chamadas e instalação de apps numa sequência só:
 
 ```
-11:33:27  CHROME  visita   google.com/search?q=magisk
-11:33:35  CHROME  visita   magiskmanager.com
-11:33:59  CHROME  visita   magiskmanager.com/downloading-magisk-manager
+11:33:27  CHROME  visita     google.com/search?q=magisk
+11:33:35  CHROME  visita     magiskmanager.com
+11:33:59  CHROME  visita     magiskmanager.com/downloading-magisk-manager
+11:35:03  APP     instalado  com.topjohnwu.magisk  com.google.android.packageinstaller
+12:02:47  APP     instalado  com.discord  com.android.vending
+   ... (mais 30 apps de mensagem/rede social instalados entre 12:02 e 12:12)
 13:20:45  SMS     recebido  ...233205525   [codigo de verificacao do LINE, redigido]
 13:30:46  SMS     recebido  732873          [codigo de verificacao do Telegram, redigido]
 13:31:36  SMS     recebido  ...437514985   [codigo de verificacao do Signal, redigido]
@@ -95,7 +106,7 @@ Rodando com `--so-usuario --fuso -5`, chama atenção que **a maioria dos 82 app
 
 (Os números completos e os códigos de verificação foram retirados deste documento — já expiraram e vêm de uma imagem pública, mas não acrescentam nada ao argumento.)
 
-**Duas atividades distintas no mesmo dia, sem ligação direta entre si:** a pesquisa e navegação até a ferramenta de root, às 11h33, e uma sequência de SMS de verificação (LINE, Telegram, Signal) às 13h20–13h32. O quesito 3 já mostrou que 29/01/2020 é o dia de **ativação** do aparelho — então esses SMS e a instalação dos respectivos apps são exatamente o que se espera de um celular recém-ativado, e nada nos artefatos do Chrome, SMS ou `packages.xml` liga essa sequência de cadastros à pesquisa por "magisk" feita horas antes. A única evidência direta de interesse em *root*, neste quesito, continua sendo a navegação em si (quesito 1); o resto da atividade do dia é consistente com o uso normal de um aparelho novo.
+**Duas fases bem distintas no mesmo dia.** A primeira (11h33–11h35) é uma sequência direta e confirmada: pesquisa por "magisk", navegação até a página de download, e instalação do pacote 1 minuto e 4 segundos depois — isso é a materialização do quesito 2. A segunda fase, quase meia hora depois (12h02–13h32), é uma instalação em lote de mais de 30 apps de mensagem/rede social pela Play Store, seguida dos SMS de verificação correspondentes — um padrão de configuração inicial de aparelho, não de uso contínuo. Nada nos artefatos liga causalmente essa segunda fase à pesquisa por "magisk": são leituras separadas da mesma linha do tempo, e tratá-las como uma coisa só superestimaria o que os dados sustentam.
 
 ### Quesito 5 — números fora da agenda
 
@@ -129,11 +140,10 @@ Rodando `favicons_fora_do_historico.py` no mesmo `History`, 13 páginas aparecem
 
 ## Conclusão (fictícia)
 
-**Indício de interesse em root; instalação não confirmada; a atividade do restante do dia é compatível com ativação normal do aparelho.**
+**Instalação da ferramenta de root confirmada por duas fontes cruzadas; a atividade do restante do dia é configuração normal de aparelho novo, sem ligação demonstrada com o root.**
 
-O único achado que aponta diretamente para a suspeita do caso é a busca e navegação explícitas até uma ferramenta de *root* (Magisk) na manhã de 29/01/2020 (quesito 1). Os dois pontos a seguir pesam contra fechar a conclusão como "root confirmado":
+Pesquisa, navegação e instalação do Magisk formam uma sequência direta e confirmada entre 11h33 e 11h35 de 29/01/2020: busca pelo termo (quesito 1), download pela página oficial e, 1 minuto e 4 segundos depois da última visita, o pacote `com.topjohnwu.magisk` aparece instalado via `packageinstaller` (quesito 2). O `History` isolado mostrava os downloads como "cancelados" — só cruzando com o `packages.xml` a instalação fica confirmada, o que já é em si um achado metodológico: nenhuma fonte única bastava.
 
-1. O `History` marca as duas tentativas de download do Magisk Manager como "canceladas" (quesito 2) — sem uma fonte adicional (log de instalação de pacotes, por exemplo), não é possível confirmar se o *root* de fato ocorreu por essa via.
-2. O restante da atividade do dia — a maior parte dos apps de usuário "instalados" (quesito 3) e os SMS de verificação de LINE/Telegram/Signal (quesito 4) — coincide com o dia de **ativação** do aparelho, não com a janela de root propriamente dita. Essa atividade tem uma explicação alternativa simples (configuração inicial de um celular novo) que não depende da hipótese de root, e os artefatos não mostram nenhuma ligação direta entre ela e a busca por "magisk". Tratar esses dois grupos de evidência como uma coisa só superestimaria o que de fato se sustenta.
+O restante do dia é uma atividade separada: mais de 30 apps de mensagem/rede social instalados pela Play Store entre 12h02 e 12h12, seguidos dos SMS de verificação correspondentes (quesitos 3 e 4). Esse padrão é típico de configuração inicial de um aparelho recém-ativado, e nenhum artefato liga essa fase à pesquisa por "magisk" feita antes. Separar as duas fases evita a leitura exagerada de "o usuário instalou N apps suspeitos no mesmo dia do root" quando, na prática, a maioria é configuração normal.
 
-**Recomendação:** preservar a imagem, buscar confirmação de root por outra via (ex.: binário `su`, propriedades de build, arquivos do Magisk no sistema de arquivos) antes de afirmar a violação de política, e aprofundar a investigação sobre o número `...195121037` (quesito 5), que não se encaixa no padrão de cadastro do dia 29/01.
+**Recomendação:** confirmar com o usuário o motivo da instalação do Magisk — já que a política da empresa proíbe root, o achado do quesito 2 sozinho já sustenta a abertura de um processo interno — e aprofundar a investigação sobre o número `...195121037` (quesito 5), que não se encaixa no padrão de cadastro do dia 29/01.
