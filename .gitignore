@@ -1,6 +1,15 @@
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # saida de analise dos scripts (pode conter dado real de um caso testado)
 *.csv
 *.xlsx
+
+# evidencia / dado de caso real: nunca deve ir pro repo
+*.db
+*.sqlite*
+*.E01
+*.dd
+*.raw
+*.pcap*

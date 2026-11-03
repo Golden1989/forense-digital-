@@ -24,7 +24,29 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 
 ## Scripts
 
-Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (nunca gravam nada nela) e automatizam perguntas comuns de quesito — apps instalados, linha do tempo unificada, sessão do Chrome, downloads, resumo de navegação, favicons fora do histórico, mapa de um banco SQLite desconhecido, contatos/chamadas/SMS, EXIF de fotos e conversor de datas. Passo a passo, opções de cada um e qual script usar para qual pergunta: [`docs/ferramentas.md`](docs/ferramentas.md).
+Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (nunca gravam nada nela) e automatizam perguntas comuns de quesito. Passo a passo e todas as opções de cada um: [`docs/ferramentas.md`](docs/ferramentas.md).
+
+| Script | Responde | Exemplo de saída (fictício) |
+|---|---|---|
+| `analisa_packages.py` | Quando cada app foi instalado/atualizado, por quem, e quais apps de usuário têm as permissões mais sensíveis | ` 3  2025-10-30 14:02:11  com.exemplo.mensageiro  (instalador: com.android.vending)  <-- ULTIMO` |
+| `linha_do_tempo.py` | O que aconteceu num dia/período, cruzando SMS, chamadas, navegação e instalação de apps numa única linha do tempo | `2025-11-03 10:00:00  CHROME  visita  https://www.exemplo.gov.br/servicos  Serviços - Exemplo Gov` |
+| `sessao_chrome.py` | Quais abas estavam abertas quando o Chrome foi fechado | `[2] https://www.exemplo.com/carrinho  Meu Carrinho - Loja Exemplo` |
+| `favicons_fora_do_historico.py` | Se há indício de limpeza de histórico (favicon sem página correspondente no `History`) | `pagina-removida-do-historico   icone: https://www.gstatic.com/favicon.ico` |
+| `resumo_navegacao.py` | Panorama de navegação: domínios/URLs mais visitados, primeira e última visita, páginas de redirecionamento | `1. www.exemplo.gov.br  visitas=3  primeira: 2025-11-01 09:10:00 \| ultima: 2025-11-03 10:00:00` |
+| `downloads_chrome.py` | O que foi baixado pelo navegador, de que URL e quando | `relatorio.pdf  [concluido, 2048 bytes]   baixado de: https://www.exemplo.gov.br/relatorio.pdf` |
+| `mapa_sqlite.py` | O que tem dentro de um banco SQLite desconhecido e em quais colunas estão as datas | `visit_time  INTEGER  nao-nulos=4  <-- DATA webkit: 2025-11-01 09:10:00 -> 2025-11-03 10:00:00` |
+| `contatos_merge.py` | Quem é o contato por trás de um número, e quais números aparecem em chamadas/SMS mas não estão na agenda | `#100 Fulano de Exemplo   telefones: +5511999990001 \| chamadas: 1 [feita=1] ...` |
+| `exif_fotos.py` | Se os metadados EXIF de uma foto (câmera, data, GPS) são consistentes ou alterados | `IMG_0231.jpg  tirada: 2025-10-12 16:40:02  [!] data de modificacao do arquivo e anterior a da foto` |
+| `convert_date.py` | Converter um número de timestamp (Android, iOS, Chrome, Windows) numa data legível | `Data: 2025-11-03 15:42:54 -03:00 (Chrome/Edge, microssegundos desde 1601)` |
+
+## Testes
+
+[`tests/`](tests/): testes automatizados com [pytest](https://pytest.org/), rodando cada script contra bancos SQLite e um `packages.xml` **sintéticos** (gerados em [`tests/dados_fake.py`](tests/dados_fake.py) — nomes, números e URLs fictícios, nunca evidência real). Garantem que os scripts continuam funcionando depois de qualquer alteração.
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
 
 ## Ferramentas usadas
 
@@ -33,6 +55,10 @@ Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (
 - FTK Imager
 - [DB Browser for SQLite](https://sqlitebrowser.org/)
 - [Registry Explorer](https://ericzimmerman.github.io/) (Eric Zimmerman)
+
+## Licença
+
+[MIT](LICENSE).
 
 ## Sobre
 
