@@ -30,7 +30,7 @@ Every command below was run with the scripts in [`ferramentas/`](../../ferrament
 ```
 python ferramentas/resumo_navegacao.py History --site magisk --fuso -5
 python ferramentas/downloads_chrome.py History --fuso -5
-python ferramentas/analisa_packages.py packages.xml --so-usuario
+python ferramentas/analisa_packages.py packages.xml --so-usuario --fuso -5
 python ferramentas/linha_do_tempo.py --sms mmssms.db --calls calllog.db --chrome History --fuso -5 --dia 2020-01-29
 python ferramentas/contatos_merge.py --contacts contacts2.db --calls calllog.db --sms mmssms.db --fuso -5
 python ferramentas/favicons_fora_do_historico.py --favicons Favicons --history History --fuso -5
@@ -68,13 +68,13 @@ last:   2020-02-14 16:58:15  https://magiskmanager.com/downloading-magisk-manage
 
 ### Question 3 — installed apps and sensitive permissions
 
-`analisa_packages.py packages.xml` (without `--so-usuario`, to see the full ranking) shows several user apps granted the `SYSTEM_ALERT_WINDOW` permission (draw over other apps) — including messaging apps (`com.facebook.orca`, `com.viber.voip`, `com.google.android.dialer`).
+`analisa_packages.py packages.xml --fuso -5` (without `--so-usuario`, to see the full ranking) shows several user apps granted the `SYSTEM_ALERT_WINDOW` permission (draw over other apps) — including messaging apps (`com.facebook.orca`, `com.viber.voip`) and the device's own dialer (`com.google.android.dialer`).
 
-Running with `--so-usuario`, it stands out that **most of the 82 user apps share the same install date** (2020-01-29, around 9pm UTC-3 — the device's activation time), rather than dates spread across the investigated period:
+Running with `--so-usuario --fuso -5`, it stands out that **most of the 82 user apps share the same install date** (2020-01-29, around 7pm UTC-5 — the device's activation time), rather than dates spread across the investigated period:
 
 ```
- 1  2008-12-31 21:00:00  com.google.android.youtube  (installer: com.android.vending)   <-- FIRST
- 2  2008-12-31 21:00:00  com.google.android.googlequicksearchbox  (installer: com.android.vending)
+ 1  2008-12-31 19:00:00  com.google.android.youtube  (installer: com.android.vending)   <-- FIRST
+ 2  2008-12-31 19:00:00  com.google.android.googlequicksearchbox  (installer: com.android.vending)
  ...
 ```
 
@@ -88,12 +88,14 @@ Running with `--so-usuario`, it stands out that **most of the 82 user apps share
 11:33:27  CHROME  visit     google.com/search?q=magisk
 11:33:35  CHROME  visit     magiskmanager.com
 11:33:59  CHROME  visit     magiskmanager.com/downloading-magisk-manager
-13:20:45  SMS     received  +13233205525   "<#> Please enter 304868 into LINE..."
-13:30:46  SMS     received  732873          "Telegram code: 59389"
-13:31:36  SMS     received  +18437514985   "<#> Your Signal verification code: 303-077"
+13:20:45  SMS     received  ...233205525   [LINE verification code, redacted]
+13:30:46  SMS     received  732873          [Telegram verification code, redacted]
+13:31:36  SMS     received  ...437514985   [Signal verification code, redacted]
 ```
 
-**A clear sequence:** search and browsing to the rooting tool at 11:33, followed almost two hours later by a run of verification SMS messages (codes for LINE, Telegram, Signal) at 13:20-13:32 — consistent with installing and signing up for several messaging apps the same day, after the rooting attempt.
+(The full numbers and verification codes were removed from this document — they have already expired and come from a public image, but they add nothing to the argument.)
+
+**Two separate activities on the same day, with no direct link between them:** the search and browsing to the rooting tool at 11:33, and a run of verification SMS messages (LINE, Telegram, Signal) at 13:20-13:32. Question 3 already showed that 2020-01-29 is the device's **activation** day — so these SMS messages and the matching app installs are exactly what's expected from a freshly activated phone, and nothing in the Chrome, SMS or `packages.xml` artifacts ties that sign-up sequence to the "magisk" search made hours earlier. The only direct evidence of interest in rooting, in this question, remains the browsing itself (question 1); the rest of the day's activity is consistent with normal use of a new device.
 
 ### Question 5 — numbers outside the address book
 
@@ -127,9 +129,11 @@ Running `favicons_fora_do_historico.py` on the same `History`, 13 pages show up 
 
 ## Conclusion (fictional)
 
-The artifacts are consistent with the case's opening hypothesis: there's an explicit search and browsing session for a rooting tool (Magisk) on the morning of 2020-01-29, followed hours later by the installation and verification of multiple messaging apps beyond what normally ships pre-configured on the device. Two points, however, keep the conclusion from being closed using only the Chrome and SMS/call/contacts artifacts:
+**Sign of interest in rooting; installation not confirmed; the rest of the day's activity is consistent with normal device activation.**
 
-1. `History` marks both Magisk Manager download attempts as "cancelled" — without an additional source (a package-install log, for instance), it isn't possible to confirm whether rooting actually happened through this path.
-2. Most of the "installed apps list" reflects the initial Google account provisioning, not user choices during the investigated period — a report that didn't isolate that initial batch would overstate the number of "suspicious" apps.
+The only finding that directly points to the case's suspicion is the explicit search and browsing session for a rooting tool (Magisk) on the morning of 2020-01-29 (question 1). The following two points weigh against closing the conclusion as "rooting confirmed":
 
-**Recommendation:** preserve the image, seek root confirmation through another path (e.g., an `su` binary, build properties, Magisk files on the filesystem) before asserting a policy violation, and dig further into the number `...195121037`.
+1. `History` marks both Magisk Manager download attempts as "cancelled" (question 2) — without an additional source (a package-install log, for instance), it isn't possible to confirm whether rooting actually happened through this path.
+2. The rest of the day's activity — most of the "installed" user apps (question 3) and the LINE/Telegram/Signal verification SMS messages (question 4) — coincides with the device's **activation** day, not with the rooting window itself. That activity has a simple alternative explanation (setting up a brand-new phone) that doesn't depend on the rooting hypothesis, and the artifacts show no direct link between it and the "magisk" search. Treating these two groups of evidence as one and the same would overstate what the data actually supports.
+
+**Recommendation:** preserve the image, seek root confirmation through another path (e.g., an `su` binary, build properties, Magisk files on the filesystem) before asserting a policy violation, and dig further into the number `...195121037` (question 5), which doesn't fit the sign-up pattern of 2020-01-29.

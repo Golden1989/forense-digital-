@@ -84,3 +84,26 @@ def test_mapa_sqlite(tmp_path):
     saida = rodar("mapa_sqlite.py", str(history), "--so-datas")
     assert "visit_time" in saida
     assert "DATA webkit" in saida
+
+
+def test_exif_fotos(tmp_path):
+    fake.criar_jpeg_com_exif(tmp_path / "foto_editada.jpg", software="Snapseed",
+                              digitalizada="2020:01:29 12:00:00")
+    fake.criar_jpeg_sem_exif(tmp_path / "print_de_tela.jpg")
+    saida = rodar("exif_fotos.py", str(tmp_path))
+    assert "com EXIF: 1" in saida
+    assert "campo Software preenchido: Snapseed" in saida
+    assert "DateTimeDigitized" in saida
+    assert "sem EXIF" in saida
+
+
+def test_sessao_chrome(tmp_path):
+    numero = fake.webkit_us(2025, 11, 1, 10, 0)
+    sessao = tmp_path / f"Session_{numero}"
+    fake.criar_sessao_chrome(sessao, [
+        (0, 0, "https://www.exemplo.gov.br/servicos", "Servicos - Exemplo Gov"),
+        (0, 1, "https://www.exemplo.com/carrinho", "Meu Carrinho - Loja Exemplo"),
+    ], selecionada={0: 1})
+    saida = rodar("sessao_chrome.py", str(sessao))
+    assert "Meu Carrinho - Loja Exemplo" in saida
+    assert "PAGINA ATUAL" in saida

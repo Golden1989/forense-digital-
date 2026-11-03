@@ -1,6 +1,8 @@
-"""Gera bancos SQLite e XML sinteticos (nenhum dado real) para os testes em
-test_ferramentas.py. Nada aqui e evidencia: nomes, numeros e URLs sao ficticios.
+"""Gera bancos SQLite, XML, JPEG e sessao do Chrome sinteticos (nenhum dado
+real) para os testes em test_ferramentas.py. Nada aqui e evidencia: nomes,
+numeros, URLs e fotos sao ficticios.
 """
+import struct
 import sqlite3
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -171,3 +173,111 @@ def criar_contacts2_db(caminho):
                 ("+5511999990001", unix_ms(2025, 11, 1, 8, 50)))
     con.commit()
     con.close()
+
+
+def _ascii(texto):
+    return texto.encode("ascii") + b"\0"
+
+
+def _empacotar_ifd(entradas, offset_tabela, offset_dados_inicial):
+    """entradas: lista de (tag, tipo, dados_externos_ou_None, valor_inline_ou_None).
+    Devolve (bytes_da_tabela, bytes_externos, offset_dados_final).
+    """
+    tabela = bytearray(struct.pack("<H", len(entradas)))
+    externos = bytearray()
+    cursor = offset_dados_inicial
+    for tag, tipo, dados, inline in entradas:
+        if inline is not None:
+            tabela += struct.pack("<HHI", tag, tipo, 1) + struct.pack("<I", inline)
+            continue
+        tam = len(dados)
+        contagem = tam if tipo == 2 else tam // 8   # ASCII: 1 byte/unidade; RATIONAL: 8 bytes/unidade
+        if tam <= 4:
+            campo = dados + b"\0" * (4 - tam)
+        else:
+            campo = struct.pack("<I", cursor)
+            externos += dados
+            cursor += tam
+        tabela += struct.pack("<HHI", tag, tipo, contagem) + campo
+    return bytes(tabela), bytes(externos), cursor
+
+
+def criar_jpeg_com_exif(caminho, make="Google", modelo="Pixel 3", software="",
+                         original="2020:01:29 11:00:00", datetime_="2020:01:29 11:00:00",
+                         digitalizada="2020:01:29 11:00:00"):
+    """Cria um JPEG minimo (sem pixels reais) com bloco EXIF montado a mao, pra
+    testar exif_fotos.py sem depender de nenhuma biblioteca de imagem.
+    """
+    entradas_ifd0 = [
+        (0x010F, 2, _ascii(make), None),
+        (0x0110, 2, _ascii(modelo), None),
+        (0x0132, 2, _ascii(datetime_), None),
+        (0x8769, 4, None, 0),  # ponteiro pro IFD Exif; valor real preenchido depois
+    ]
+    if software:
+        entradas_ifd0.append((0x0131, 2, _ascii(software), None))
+
+    entradas_exif = [
+        (0x9003, 2, _ascii(original), None),
+        (0x9004, 2, _ascii(digitalizada), None),
+    ]
+
+    tam_tabela_ifd0 = 2 + 12 * len(entradas_ifd0)
+    tam_tabela_exif = 2 + 12 * len(entradas_exif)
+    offset_ifd0 = 8
+    offset_exif = offset_ifd0 + tam_tabela_ifd0
+    offset_dados = offset_exif + tam_tabela_exif
+
+    # corrige o ponteiro pro IFD Exif agora que o offset e' conhecido
+    entradas_ifd0 = [(t, tp, d, offset_exif if t == 0x8769 else i) for t, tp, d, i in entradas_ifd0]
+
+    tabela_ifd0, externos_ifd0, cursor = _empacotar_ifd(entradas_ifd0, offset_ifd0, offset_dados)
+    tabela_exif, externos_exif, cursor = _empacotar_ifd(entradas_exif, offset_exif, cursor)
+
+    tiff = (b"II" + struct.pack("<H", 42) + struct.pack("<I", offset_ifd0)
+            + tabela_ifd0 + tabela_exif + externos_ifd0 + externos_exif)
+
+    app1 = b"Exif\0\0" + tiff
+    segmento = b"\xff\xe1" + struct.pack(">H", len(app1) + 2) + app1
+    jpeg = b"\xff\xd8" + segmento + b"\xff\xd9"
+    with open(caminho, "wb") as f:
+        f.write(jpeg)
+
+
+def criar_jpeg_sem_exif(caminho):
+    """JPEG minimo sem nenhum bloco EXIF (ex.: print de tela)."""
+    with open(caminho, "wb") as f:
+        f.write(b"\xff\xd8\xff\xd9")
+
+
+def _texto32(texto):
+    b = texto.encode("utf-8")
+    pad = (-len(b)) % 4
+    return struct.pack("<i", len(b)) + b + b"\0" * pad
+
+
+def _texto16(texto):
+    b = texto.encode("utf-16-le")
+    return struct.pack("<i", len(b) // 2) + b
+
+
+def criar_sessao_chrome(caminho, paginas, selecionada=None):
+    """Cria um arquivo de sessao do Chrome (formato SNSS) sintetico.
+
+    paginas: lista de (aba, indice, url, titulo).
+    selecionada: dict {aba: indice} da pagina marcada como atual em cada aba.
+    """
+    selecionada = selecionada or {}
+    dados = bytearray(b"SNSS" + struct.pack("<i", 1))
+
+    def comando(tipo, conteudo):
+        return struct.pack("<H", len(conteudo) + 1) + bytes([tipo]) + conteudo
+
+    for aba, indice, url, titulo in paginas:
+        conteudo = b"\0\0\0\0" + struct.pack("<ii", aba, indice) + _texto32(url) + _texto16(titulo)
+        dados += comando(6, conteudo)
+    for aba, indice in selecionada.items():
+        dados += comando(7, struct.pack("<ii", aba, indice))
+
+    with open(caminho, "wb") as f:
+        f.write(bytes(dados))

@@ -10,6 +10,10 @@ O script apenas LE o arquivo. Nunca grava nada na pasta da evidencia.
 Datas: o packages.xml guarda 'it' (primeira instalacao) e 'ut' (ultima
 atualizacao) em milissegundos Unix escritos em hexadecimal.
 
+--fuso: 'utc' ou horas em relacao ao UTC (padrao: -3, Brasilia), igual aos
+outros scripts deste repositorio - use o mesmo fuso ao cruzar a saida daqui
+com a de linha_do_tempo.py, resumo_navegacao.py etc.
+
 PRIMEIRO e ULTIMO: sao calculados so entre os apps de USUARIO (/data/app).
 Os apps de sistema vem do firmware e quase todos tem a mesma data, entao
 "o primeiro instalado" entre eles nao diz nada sobre o dono do aparelho.
@@ -19,7 +23,13 @@ import csv
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
-FUSO = timezone(timedelta(hours=-3))  # UTC-3 (Brasilia)
+
+def ler_fuso(texto):
+    t = texto.strip().lower().replace("utc", "")
+    if t in ("", "z"):
+        return timezone.utc, "UTC"
+    horas = float(t)
+    return timezone(timedelta(hours=horas)), f"UTC{horas:+g}"
 
 # Permissoes que costumam interessar a uma pericia (nome curto, sem o prefixo).
 SENSIVEIS = {
@@ -41,14 +51,14 @@ def hex_para_ms(valor):
     return int(valor, 16) if valor else 0
 
 
-def ms_para_data(ms):
-    """Converte milissegundos Unix em 'AAAA-MM-DD HH:MM:SS' (UTC-3)."""
+def ms_para_data(ms, fuso):
+    """Converte milissegundos Unix em 'AAAA-MM-DD HH:MM:SS' no fuso escolhido."""
     if not ms:
         return ""
-    return datetime.fromtimestamp(ms / 1000, FUSO).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.fromtimestamp(ms / 1000, fuso).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def ler_pacotes(caminho):
+def ler_pacotes(caminho, fuso):
     """Le o XML e devolve uma lista de dicionarios, um por <package>."""
     raiz = ET.parse(caminho).getroot()
     pacotes = []
@@ -63,8 +73,8 @@ def ler_pacotes(caminho):
             "marca": "",              # PRIMEIRO ou ULTIMO, idem
             "pacote": p.get("name"),
             "instalado_ms": instalado,  # uso interno (ordenacao exata), nao vai ao CSV
-            "instalado_em": ms_para_data(instalado),
-            "atualizado_em": ms_para_data(hex_para_ms(p.get("ut"))),
+            "instalado_em": ms_para_data(instalado, fuso),
+            "atualizado_em": ms_para_data(hex_para_ms(p.get("ut")), fuso),
             "instalador": p.get("installer", "-"),
             "caminho": p.get("codePath", ""),
             "n_permissoes": len(itens),
@@ -98,19 +108,22 @@ def main():
     ap = argparse.ArgumentParser(description="Resumo do packages.xml")
     ap.add_argument("xml", help="caminho do packages.xml")
     ap.add_argument("--so-usuario", action="store_true", help="mostra so apps de /data/app")
+    ap.add_argument("--fuso", default="-3", help="'utc' ou horas (padrao: -3, Brasilia)")
     ap.add_argument("--csv", help="salva a tabela completa neste arquivo CSV")
     args = ap.parse_args()
+    fuso, nome_fuso = ler_fuso(args.fuso)
 
-    pacotes = ler_pacotes(args.xml)
+    pacotes = ler_pacotes(args.xml, fuso)
     usuario = marcar_ordem(pacotes)
     lista = usuario if args.so_usuario else pacotes
 
+    print(f"Arquivo: {args.xml} | horarios em {nome_fuso}")
     print(f"Total de pacotes: {len(pacotes)}")
     print(f"  de usuario (/data/app): {len(usuario)}")
     print(f"  de sistema: {len(pacotes) - len(usuario)}")
 
     if usuario:
-        print("\nApps de usuario em ordem de instalacao (UTC-3):")
+        print(f"\nApps de usuario em ordem de instalacao ({nome_fuso}):")
         for p in usuario:
             sufixo = f"   <-- {p['marca']}" if p["marca"] else ""
             print(f"  {p['ordem_instalacao']:2d}  {p['instalado_em']}  {p['pacote']}"

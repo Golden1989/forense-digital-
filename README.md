@@ -1,5 +1,7 @@
 # Forense Digital — Notas de Estudo
 
+[![tests](https://github.com/Golden1989/forense-digital-/actions/workflows/tests.yml/badge.svg)](https://github.com/Golden1989/forense-digital-/actions/workflows/tests.yml)
+
 🌐 [Read in English](README.en.md)
 
 Repositório de estudo da disciplina de perícia forense digital: guias de ferramenta, metodologia e comandos organizados enquanto eu aprendo. Nada aqui é específico de um caso — **sem imagem de disco, sem laudo preenchido, sem dado de prova**.

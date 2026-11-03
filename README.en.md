@@ -1,5 +1,7 @@
 # Digital Forensics — Study Notes
 
+[![tests](https://github.com/Golden1989/forense-digital-/actions/workflows/tests.yml/badge.svg)](https://github.com/Golden1989/forense-digital-/actions/workflows/tests.yml)
+
 🌐 [Ler em português](README.md)
 
 Study repository for a digital forensics course: tool guides, methodology and commands organized as I learn. Nothing here is case-specific — **no disk image, no filled-in report, no evidence data**.

@@ -75,6 +75,7 @@ python ferramentas\analisa_packages.py "C:\evidence\data\system\packages.xml" --
 | Option | Effect |
 |---|---|
 | `--so-usuario` | only apps in `/data/app` (system apps come from the firmware and almost all share the same date) |
+| `--fuso` | `utc` or hours (default: `-3`) — use the same timezone as the other scripts when cross-referencing output |
 | `--csv file.csv` | writes the full table in chronological order |
 
 Notes: `it` (first install) and `ut` (last update) are hexadecimal in the XML; the script converts them. The sensitive-permissions column is empty on Android 10 because runtime permissions live in `runtime-permissions.xml`. On Android 12+ `packages.xml` is binary (ABX) and this script cannot read it.
