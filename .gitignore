@@ -13,3 +13,6 @@ __pycache__/
 *.dd
 *.raw
 *.pcap*
+
+# transcricao de audio de evidencia (texto do que foi falado no caso): nunca vai pro repo
+transcricoes*.json

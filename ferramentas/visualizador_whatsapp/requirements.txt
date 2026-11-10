@@ -1,0 +1,8 @@
+# O visualizador (visualizador_whatsapp.py) usa só a biblioteca padrão do Python.
+# Abaixo, as bibliotecas OPCIONAIS:
+
+# leitura de EXIF (câmera, datas, GPS) das imagens no visualizador
+pillow
+
+# transcrição de áudios (transcrever_audios.py)
+faster-whisper

@@ -31,6 +31,8 @@ If an example below uses a case name, a company or a question number, it's **fic
 
 [`ferramentas/`](ferramentas/) folder: Python scripts that only read the evidence (never write anything into it) and automate common forensic questions. Step-by-step and every option for each script: [`docs/en/tools.md`](docs/en/tools.md).
 
+> **WhatsApp viewer (iOS and Android):** a larger tool with a browser interface, kept in its own folder with its own README: [`ferramentas/visualizador_whatsapp/`](ferramentas/visualizador_whatsapp/README.en.md).
+
 | Script | Answers | Example output (fictional) |
 |---|---|---|
 | `analisa_packages.py` | When each app was installed/updated, by whom, and which user apps have the most sensitive permissions | ` 3  2025-10-30 14:02:11  com.example.messenger  (installer: com.android.vending)  <-- LAST` |

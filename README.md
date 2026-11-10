@@ -31,6 +31,8 @@ Se algum exemplo abaixo usa nome de caso, empresa ou quesito, é **fictício**, 
 
 Pasta [`ferramentas/`](ferramentas/): scripts Python que só leem a evidência (nunca gravam nada nela) e automatizam perguntas comuns de quesito. Passo a passo e todas as opções de cada um: [`docs/ferramentas.md`](docs/ferramentas.md).
 
+> **Visualizador de WhatsApp (iOS e Android):** ferramenta maior, com interface no navegador, que tem pasta própria e README próprio: [`ferramentas/visualizador_whatsapp/`](ferramentas/visualizador_whatsapp/README.md).
+
 | Script | Responde | Exemplo de saída (fictício) |
 |---|---|---|
 | `analisa_packages.py` | Quando cada app foi instalado/atualizado, por quem, e quais apps de usuário têm as permissões mais sensíveis | ` 3  2025-10-30 14:02:11  com.exemplo.mensageiro  (instalador: com.android.vending)  <-- ULTIMO` |
